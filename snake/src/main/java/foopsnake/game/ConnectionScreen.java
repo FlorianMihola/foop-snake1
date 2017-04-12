@@ -19,6 +19,7 @@ public class ConnectionScreen extends BasicGameState {
 	private TrueTypeFont trueTypeFont;
 	private MouseOverArea connectButton;
 	private MouseOverArea hostButton;
+	private MouseOverArea startButton;
 	private boolean mousePressed = false;
 	private boolean showCTH = false;
 	private boolean showSGH = false;
@@ -31,6 +32,7 @@ public class ConnectionScreen extends BasicGameState {
 		
 		connectButton = new MouseOverArea(gc, new Image("src/main/resources/button-red.png"), 500,90);
 		hostButton = new MouseOverArea(gc, new Image("src/main/resources/button-red.png"), 300,180);
+		startButton = new MouseOverArea(gc, new Image("src/main/resources/button-red.png"), 300,270);
 	}
 	
 	public void render(GameContainer gc, StateBasedGame sbg, Graphics g) throws SlickException {
@@ -38,15 +40,18 @@ public class ConnectionScreen extends BasicGameState {
 		g.clear();
 		// render some text to the screen
 		trueTypeFont.drawString(300.0f, 50.0f, "Connect to a host:", Color.green);
-		trueTypeFont.drawString(300.0f, 150.0f, "Start game as host:", Color.green);
+		trueTypeFont.drawString(300.0f, 150.0f, "Be the host:", Color.green);
+		trueTypeFont.drawString(300.0f, 240.0f, "Start the game", Color.green);
+		
 		if (showCTH) {
 			trueTypeFont.drawString(560.0f, 100.0f, "Connecting to host...", Color.green);
 		}
 		if (showSGH){
-			trueTypeFont.drawString(400.0f, 200.0f, "Start game as host...", Color.green);
+			trueTypeFont.drawString(400.0f, 200.0f, "You are now host...", Color.green);
 		}
 		connectButton.render(gc, g);
 		hostButton.render(gc, g);
+		startButton.render(gc, g);
 		ipHost.render(gc, g);
 	}
 
@@ -60,7 +65,8 @@ public class ConnectionScreen extends BasicGameState {
 				if (mousePressed) {
 					showCTH = true;
 					try {
-						ClientProgram.init(ipHost.getText());
+						sbg.enterState(GameStates.SnakeGameClient);
+						ClientProgram.init(ipHost.getText(),(SnakeGameClient)sbg.getState(GameStates.SnakeGameClient));
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -76,6 +82,23 @@ public class ConnectionScreen extends BasicGameState {
 					showSGH = true;
 					try {
 						ServerProgram.init();
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		if(startButton.isMouseOver()) {
+			if(input.isMouseButtonDown(input.MOUSE_LEFT_BUTTON)) {
+				mousePressed = true;
+			} else {
+				if (mousePressed) {
+					try {
+						sbg.enterState(GameStates.SnakeGameClient);
+						ClientProgram.init(ipHost.getText(),(SnakeGameClient)sbg.getState(GameStates.SnakeGameClient));
+						Thread.sleep(500);
+						ServerProgram.startGame();
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();

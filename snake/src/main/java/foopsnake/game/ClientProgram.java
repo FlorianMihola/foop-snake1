@@ -1,5 +1,6 @@
 package foopsnake.game;
 
+import org.newdawn.slick.Color;
 import org.newdawn.slick.geom.Vector2f;
 
 import com.esotericsoftware.kryonet.Client;
@@ -24,6 +25,8 @@ public class ClientProgram extends Listener {
 		client.getKryo().register(SnakeDataPackage.class);
 		client.getKryo().register(InitPackage.class);
 		client.getKryo().register(StartPackage.class);
+		client.getKryo().register(ItemPackage.class);
+		client.getKryo().register(LostWinnerPackage.class);
 		hostip = ip;
 		
 		client.start();
@@ -40,6 +43,34 @@ public class ClientProgram extends Listener {
 			SnakeDataPackage data = (SnakeDataPackage) p;
 			//System.out.println("Client receives snake data...");
 			sgc.setSnake(data);
+			
+		}
+		if (p instanceof LostWinnerPackage) {
+			LostWinnerPackage lostWinnerPackage = (LostWinnerPackage)p;
+			if(lostWinnerPackage.isWon()) {
+				sgc.youWon();
+			}else {
+				sgc.removePlayer(lostWinnerPackage.getId());
+			}
+		}
+		if (p instanceof ItemPackage) {
+			ItemPackage itemPackage = (ItemPackage)p;
+			Item item = null;
+			if (itemPackage.isRemove()) {
+				//Remove item
+				sgc.removeItem(itemPackage.getId());
+			} else {
+				//add item
+				String type = itemPackage.getItemType();
+				switch(type) {
+				case "ItemSize" : item = new ItemSize(itemPackage.getPosition()); break;
+				case "ItemSpeed" : item = new ItemSpeed(itemPackage.getPosition()); break;
+				case "ItemInvincible" : item = new ItemInvincible(itemPackage.getPosition()); break;
+				case "ItemDirection" : item = new ItemDirection(itemPackage.getPosition()); break;
+				}
+				item.setId(itemPackage.getId());
+				sgc.addNewItem(item);
+			}
 			
 		}
 		if (p instanceof InitPackage) {

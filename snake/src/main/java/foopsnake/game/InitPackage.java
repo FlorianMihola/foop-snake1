@@ -12,6 +12,7 @@ public class InitPackage {
 	private Vector2f position[];
 	private int numberOfPlayers;
 	private int playerId;
+	private int borderSize;
 	
 	public int getPlayerId() {
 		return playerId;
@@ -36,6 +37,12 @@ public class InitPackage {
 	}
 	public void setPosition(Vector2f[] position) {
 		this.position = position;
+	}
+	public void setBorderSize(int size) {
+		this.borderSize = size;
+	}
+	public int getBorderSize() {
+		return this.borderSize;
 	}
 	
 	

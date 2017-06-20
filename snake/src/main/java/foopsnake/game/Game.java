@@ -15,14 +15,17 @@ import org.newdawn.slick.state.StateBasedGame;
 public class Game extends StateBasedGame {
 
     /** Screen width */
-    private static final int WIDTH = 800;
+    public static final int WIDTH = 800;
     /** Screen height */
-    private static final int HEIGHT = 600;
+    public static final int HEIGHT = 600;
+    
+    public static int TILE_SIZE = 25;
     
     public Game() {
         super("Simple Snake Game");
         this.addState(new ConnectionScreen());
         this.addState(new SnakeGameClient());
+        this.addState(new LostWonScreen());
     }
 
     public static void main(String[] args) throws SlickException {
@@ -37,6 +40,7 @@ public class Game extends StateBasedGame {
 		gc.getGraphics().setBackground(new Color(255,255,255));
 		Image tileSize = new Image("src/main/resources/snake-body.png");
 		Snake.TILE_SIZE = tileSize.getWidth();
+		this.TILE_SIZE = tileSize.getWidth();
 		this.enterState(GameStates.ConnectionScreen);
 	}
 

@@ -1,6 +1,5 @@
 package foopsnake.game;
 
-import org.newdawn.slick.Color;
 import org.newdawn.slick.geom.Vector2f;
 
 import com.esotericsoftware.kryonet.Client;
@@ -11,11 +10,19 @@ public class ClientProgram extends Listener {
 	static Client client;
 	static String hostip;
 	static int tcpPort = 27960, udpPort = 27960;
-	
+	static boolean init = false;
 	static SnakeGameClient sgc;
+	
+	public static boolean isInit() {
+		return init;
+	}
+	public static void close() {
+		client.stop();
+	}
 	
 	public static void init(String ip,SnakeGameClient snake) throws Exception {
 		client = new Client();
+		init = true;
 		
 		client.getKryo().register(Direction.class);
 		client.getKryo().register(Vector2f.class);

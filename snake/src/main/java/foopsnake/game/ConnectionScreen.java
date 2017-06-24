@@ -82,6 +82,7 @@ public class ConnectionScreen extends BasicGameState {
 					showSGH = true;
 					try {
 						ServerProgram.init();
+						ServerProgram.setHost();
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();

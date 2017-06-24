@@ -15,17 +15,32 @@ import com.esotericsoftware.kryonet.Server;
 
 public class ServerProgram extends Listener{
 	static Server server;
-	static GameServer game = new GameServer();
+	static GameServer game;
 	static ArrayList<Connection> clients = new ArrayList<Connection>();
+	static ArrayList<Connection> savedClients = new ArrayList<Connection>();
 	static int udpPort = 27960, tcpPort = 27960;
 	static int readyPlayers = 0;
+	static boolean host = false;
+	static boolean init = false;
 	
+	public static boolean isInit() {
+		return init;
+	}
+	public static void setHost() {
+		host = true;
+	}
+	public static boolean isHost() {
+		return host;
+	}
+	public static void close() {
+		server.stop();
+	}
 	public static void init() throws Exception {
 		System.out.println("Creating the server");
-		
-		game.setDaemon(true);
 		//create server
 		server = new Server();
+		
+		init = true;
 		
 		//register packages
 		server.getKryo().register(Direction.class);	
@@ -55,12 +70,6 @@ public class ServerProgram extends Listener{
 		System.out.println("Client connected: "+c.getRemoteAddressTCP().getHostString());
 	
 		clients.add(c);
-		
-		Vector2f pos = new Vector2f(5+clients.size()*5,10);
-		int size = 8;
-		
-		game.snakes.put(c,new Snake(size, pos, 25, true));
-		game.directions.put(c, Direction.UP);
 	}
 	
 	public void received(Connection c, Object p) {
@@ -86,9 +95,22 @@ public class ServerProgram extends Listener{
 	}
 	
 	public static void startGame() {
+		if(savedClients.size() == 0) {
+			savedClients = (ArrayList<Connection>) clients.clone();
+		} else {
+			clients = (ArrayList<Connection>) savedClients.clone();
+		}
+		game = new GameServer();
 		
+		int client_size = clients.size();
+		for(int i = 0; i < client_size; i++) {
+			Vector2f pos = new Vector2f(5+i*5,10);
+			game.snakes.put(clients.get(i),new Snake(8, pos, 25, true));
+			game.directions.put(clients.get(i), Direction.UP);
+		}
+		
+		readyPlayers = 0;
 		//Send packages to initialize all clients
-		
 		InitPackage p = new InitPackage();
 		p.setNumberOfPlayers(clients.size());
 		Vector2f[] position = new Vector2f[clients.size()];
@@ -197,8 +219,6 @@ public class ServerProgram extends Listener{
 				
 				for (Map.Entry<Connection, Snake> entry : snakes.entrySet()) {
 					entry.getValue().update(directions.get(entry.getKey()), (int)delta);
-					if(gameTime > 30000) {
-					}
 					itemList.forEach((itemTupel)->{
 						if(itemTupel.getItem().getPosition().distance(entry.getValue().getGridPosition()) == 0.0f) {
 							System.out.println(itemTupel.getItem().getClass());
@@ -222,17 +242,8 @@ public class ServerProgram extends Listener{
 						if(snakes.size() == 1) {
 							running = false;
 						}
-						clients.remove(entry.getKey());
 						removeList.add(entry.getKey());
 					}
-				}
-				removeList.forEach((connection)->{
-					snakes.remove(connection);
-				});
-				System.out.println(snakes.size());
-				if(snakes.size() == 1 && multiplayer) {
-					ServerProgram.sendLostWon(clients.get(0), true);
-					running = false;
 				}
 				
 				for(Map.Entry<Connection, Snake> entry1 : snakes.entrySet()) {
@@ -253,6 +264,51 @@ public class ServerProgram extends Listener{
 							}
 						}			 
 					}
+				}
+				removeList.forEach((connection)->{
+					clients.remove(connection);
+					snakes.remove(connection);
+				});
+				
+				if(gameTime > 30000) {
+					int biggestSize = 0;
+					float biggestHealth = 0;
+					LinkedList<Connection> playersWon = new LinkedList<>();
+					Connection playerWon = null;
+					for (Map.Entry<Connection, Snake> entry : snakes.entrySet()) {
+						if(entry.getValue().getSize() > biggestSize) {
+							biggestSize = entry.getValue().getSize();
+							playersWon.removeAll(playersWon);
+							playersWon.add(entry.getKey());
+						}
+						if(entry.getValue().getSize() == biggestSize) {
+							biggestSize = entry.getValue().getSize();
+							playersWon.add(entry.getKey());
+						}
+					}
+					if(playersWon.size() > 1) {
+						for(int i = 0; i < playersWon.size(); i++) {
+							if(snakes.get(playersWon.get(i)).getHealth() > biggestHealth) {
+								biggestHealth = snakes.get(playersWon.get(i)).getHealth();
+								playerWon = playersWon.get(i);
+							}
+						}
+					} else {
+						playerWon = playersWon.get(0);
+					}
+					for(int i = 0; i < clients.size(); i++) {
+						if(clients.get(i).equals(playerWon)) {
+							ServerProgram.sendLostWon(clients.get(i), true);
+						} else {
+							ServerProgram.sendLostWon(clients.get(i), false);
+						}
+						running = false;
+					}
+					
+				}
+				if(snakes.size() == 1 && multiplayer) {
+					ServerProgram.sendLostWon(clients.get(0), true);
+					running = false;
 				}
 				for (Map.Entry<Connection, Snake> entry : snakes.entrySet()) {
 				//Every 1.5 seconds we send the current location of the snakes to the clients

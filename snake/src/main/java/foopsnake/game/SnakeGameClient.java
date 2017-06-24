@@ -24,7 +24,7 @@ public class SnakeGameClient extends BasicGameState {
 	private Border border;
 	private Direction[] direction;
 	private int playerId;
-	private List<Item> itemList = new LinkedList<>();
+	private List<Item> itemList;
 	boolean running = false;
 	boolean init = false;
 	boolean lost = false;
@@ -49,6 +49,10 @@ public class SnakeGameClient extends BasicGameState {
 		playerId = p.getPlayerId();		 
 		ClientProgram.sendStart(new StartPackage());
 		init = true;
+		running = false;
+		lost = false;
+		won = false;
+		itemList = new LinkedList<>();
 	}
 	
 	/**
@@ -143,9 +147,17 @@ public class SnakeGameClient extends BasicGameState {
 			
 		}
 	}
+
+	
+	public void reset() {
+		init = false;
+		running = false;
+		lost = false;
+		won = false;
+	}
 	
 	public void setSnake(SnakeDataPackage snakeData) {
-		if(running) {
+		if(running && !won && !lost) {
 			snake[snakeData.getPlayerId()].setSnake(snakeData);
 			direction[snakeData.getPlayerId()] = snakeData.getLastDirection();
 		}

@@ -43,6 +43,19 @@ public class Game extends StateBasedGame {
 		this.TILE_SIZE = tileSize.getWidth();
 		this.enterState(GameStates.ConnectionScreen);
 	}
+	
+	@Override
+    public boolean closeRequested()
+    {
+		if(ServerProgram.isInit()) {
+			ServerProgram.close();
+		}
+		if(ClientProgram.isInit()) {
+			ClientProgram.close();
+		}
+	    System.exit(0);
+	    return false;
+    }
 
 }
 
